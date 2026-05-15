@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PsyTrack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    
+</head>
+<body class="dark-theme">
+
+<div id="auth-overlay">
+    <div class="glass-card" style="width: 100%; max-width: 400px; text-align: center;">
+        <h1 style="margin-bottom: 10px;">PsyTrack</h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">Monitor your drills, goals, and performance.</p>
+        <form id="authForm">
+            <div style="margin-bottom: 15px;"><input type="text" id="authNickname" placeholder="Your Nickname" required></div>
+            <div style="margin-bottom: 15px;"><input type="email" id="authEmail" placeholder="Gmail Address (@gmail.com)" required></div>
+            <div style="margin-bottom: 20px;"><input type="password" id="authPassword" placeholder="Password (Secure)" required></div>
+            <button type="submit" class="btn-submit">Login</button>
+        </form>
+    </div>
+</div>
+
+<aside class="sidebar">
+    <div class="logo-area">
+        <h1>PsyTrack</h1>
+    </div>
+    <nav class="nav-links">
+        <button class="nav-btn active" onclick="switchTab('dashboard', event)"><i class="fas fa-chart-pie"></i><span>Dashboard</span></button>
+        <button class="nav-btn" onclick="switchTab('drills', event)"><i class="fas fa-pen-nib"></i><span>Drills</span></button>
+        <button class="nav-btn" onclick="switchTab('subjects', event)"><i class="fas fa-book-open"></i><span>Subjects</span></button>
+        <button class="nav-btn" onclick="switchTab('goals', event)"><i class="fas fa-bullseye"></i><span>Goals</span></button>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Toggle Theme"><i class="fas fa-moon"></i></button>
+        <button class="theme-toggle" onclick="logout()" style="color: var(--fail-color); margin-left: auto;" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+</aside>
+
+<div class="main-content">
+    <header>
+        <h1 id="main-header">Welcome Back.</h1>
+    </header>
+
+    <main id="dashboard-section">
+        <div class="dashboard-grid">
+            <div class="glass-card stat-card"><span class="stat-label">Total Drills</span><span id="stat-total-drills" class="stat-value">0</span></div>
+            <div class="glass-card stat-card"><span class="stat-label">Overall Avg</span><span id="stat-avg-score" class="stat-value">0%</span></div>
+            <div class="glass-card stat-card"><span class="stat-label">Goals Achieved</span><span id="stat-goals-done" class="stat-value">0</span></div>
+            <div class="glass-card stat-card"><span class="stat-label">Streak Status</span><span id="stat-streak" class="stat-value">0 🍂</span></div>
+        </div>
+
+        <div class="charts-row">
+            <div class="glass-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h3 style="font-size:0.95rem;">Performance Trend</h3>
+                    <select id="trendFilter" onchange="renderCharts()" style="width:auto; padding:6px 12px; font-size:0.75rem;">
+                        <option value="All">All Subjects</option>
+                        <option value="Psych Assessment">PsychAss</option>
+                        <option value="Abnormal Psychology">AbPsych</option>
+                        <option value="Developmental Psychology">DevPsych</option>
+                        <option value="Industrial Psychology">I/O</option>
+                    </select>
+                </div>
+                <div class="chart-container"><canvas id="performanceChart"></canvas></div>
+            </div>
+            <div class="glass-card">
+                <h3 style="font-size:0.95rem; margin-bottom:20px;">Pass vs Fail</h3>
+                <div class="chart-container"><canvas id="passFailChart"></canvas></div>
+            </div>
+        </div>
+        
+        <div class="glass-card">
+            <h3 style="font-size:0.95rem; margin-bottom:20px;">Weekly Improvement (Avg %)</h3>
+            <div class="chart-container" style="height:250px;"><canvas id="weeklyChart"></canvas></div>
+        </div>
+    </main>
+
+    <section id="drills-section" class="hidden">
+        <div class="charts-row" style="grid-template-columns: 1.3fr 0.7fr;">
+            <div class="glass-card">
+                <h3 id="formTitle" style="font-size:1rem; margin-bottom:20px;">Log New Drill</h3>
+                <form id="drillForm">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                        <input type="text" id="drillTitle" placeholder="Drill / Exam Title (e.g. Mockboard 1)" required>
+                        <select id="drillSubject" required>
+                            <option value="Psych Assessment">Psych Assessment</option>
+                            <option value="Abnormal Psychology">Abnormal Psychology</option>
+                            <option value="Developmental Psychology">Developmental Psychology</option>
+                            <option value="Industrial Psychology">Industrial Psychology</option>
+                        </select>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; margin-bottom:15px;">
+                        <input type="date" id="drillDate" required>
+                        <input type="number" id="totalItems" placeholder="Total Items" required>
+                        <input type="number" id="correctAnswers" placeholder="Your Score" required>
+                    </div>
+                    <div style="margin-bottom:15px;"><input type="url" id="answerLink" placeholder="Reference Link (Drive/FB Live)"></div>
+                    <button type="submit" id="submitBtn" class="btn-submit">Save Record</button>
+                    <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden" style="background:none; border:none; color:var(--text-muted); cursor:pointer; width:100%; margin-top:15px; font-size:0.85rem;">Cancel Edit</button>
+                </form>
+            </div>
+            <div class="glass-card">
+                <h3 style="font-size:1rem;">Session Notes</h3>
+                <div style="display:flex; gap:10px; margin:20px 0;">
+                    <input type="text" id="noteInput" placeholder="Add topic (e.g. Stats)">
+                    <button type="button" onclick="addNote()" class="btn-submit" style="width:auto; padding:0 20px;">Add</button>
+                </div>
+                <div id="notes-container" style="display:flex; flex-direction:column; gap:10px; max-height:220px; overflow-y:auto;"></div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                <h3 style="font-size:1rem;">Recent Records</h3>
+                <div style="position:relative; width: 280px;">
+                    <input type="text" id="tableSearch" placeholder="Search by subject..." onkeyup="filterRecords()" style="padding-left:45px;">
+                    <i class="fas fa-search" style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.9rem;"></i>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Subject</th><th>Items</th><th>Score</th><th>Rate %</th><th>Result</th><th>Type</th><th>Ref</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="drillsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="subjects-section" class="hidden">
+        <div id="subjects-summary-header" class="dashboard-grid"></div>
+        <div id="subjects-grid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));"></div>
+    </section>
+
+    <section id="goals-section" class="hidden">
+        <div class="charts-row">
+            <div class="glass-card">
+                <h3 style="font-size:1rem; margin-bottom:20px;">🎯 Set New Goal</h3>
+                <form id="goalForm">
+                    <div style="margin-bottom:15px;"><input type="text" id="goalTitle" placeholder="e.g. Maintain 80% in AbPsych" required></div>
+                    <div style="margin-bottom:15px;">
+                        <select id="goalSubject" required>
+                            <option value="Psych Assessment">Psych Assessment</option>
+                            <option value="Abnormal Psychology">Abnormal Psychology</option>
+                            <option value="Developmental Psychology">Developmental Psychology</option>
+                            <option value="Industrial Psychology">Industrial Psychology</option>
+                        </select>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                        <input type="number" id="goalTarget" placeholder="Target Score %" required>
+                        <select id="goalDuration"><option>Weekly</option><option>Monthly</option></select>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+                        <input type="date" id="goalStart" required title="Start Date">
+                        <input type="date" id="goalEnd" required title="End Date">
+                    </div>
+                    <button type="submit" class="btn-submit">Track Goal</button>
+                </form>
+            </div>
+            <div class="glass-card">
+                <h3 style="font-size:1rem; margin-bottom:20px;">🎯 Active Goals</h3>
+                <div id="goals-list" style="display:flex; flex-direction:column; gap:20px;"></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="supabaseClient.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
