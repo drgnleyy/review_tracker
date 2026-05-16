@@ -27,10 +27,14 @@
         <h1 style="margin-bottom: 10px;">PsyTrack</h1>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">Monitor your drills, goals, and performance.</p>
         <form id="authForm">
-            <div style="margin-bottom: 15px;"><input type="text" id="authNickname" placeholder="Your Nickname" required></div>
+            <div id="authModeSwitch" style="display:flex; gap:10px; justify-content:center; margin-bottom:20px;">
+                <button type="button" id="authLoginModeBtn" class="btn-submit mode-btn active" style="flex:1;" onclick="setAuthMode('login')">Login Mode</button>
+                <button type="button" id="authRegisterModeBtn" class="btn-submit mode-btn" style="flex:1; background:#22c55e;" onclick="setAuthMode('register')">Register Mode</button>
+            </div>
+            <div id="nicknameWrapper" style="margin-bottom: 15px; display:none;"><input type="text" id="authNickname" placeholder="Your Nickname" required></div>
             <div style="margin-bottom: 15px;"><input type="email" id="authEmail" placeholder="Gmail Address (@gmail.com)" required></div>
             <div style="margin-bottom: 20px;"><input type="password" id="authPassword" placeholder="Password (Secure)" required></div>
-            <button type="submit" class="btn-submit">Login</button>
+            <button type="submit" class="btn-submit" id="authSubmitBtn">Login</button>
         </form>
     </div>
 </div>
