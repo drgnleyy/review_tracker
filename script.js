@@ -17,33 +17,6 @@
         "Industrial Psychology": "#eab308" 
     };
 
-    let authMode = 'login';
-
-    function updateAuthForm() {
-        const nicknameWrapper = document.getElementById('nicknameWrapper');
-        const loginModeBtn = document.getElementById('authLoginModeBtn');
-        const registerModeBtn = document.getElementById('authRegisterModeBtn');
-        const submitBtn = document.getElementById('authSubmitBtn');
-        if (!nicknameWrapper || !loginModeBtn || !registerModeBtn || !submitBtn) return;
-
-        if (authMode === 'register') {
-            nicknameWrapper.style.display = 'block';
-            submitBtn.textContent = 'Register';
-            loginModeBtn.classList.remove('active');
-            registerModeBtn.classList.add('active');
-        } else {
-            nicknameWrapper.style.display = 'none';
-            submitBtn.textContent = 'Login';
-            loginModeBtn.classList.add('active');
-            registerModeBtn.classList.remove('active');
-        }
-    }
-
-    function setAuthMode(mode) {
-        authMode = mode === 'register' ? 'register' : 'login';
-        updateAuthForm();
-    }
-
     function getStreakSVG(streak) {
         const max = 5;
         const pct = Math.min(streak, max) / max;
@@ -560,34 +533,6 @@
         });
     }
 
-    async function registerUser() {
-        const email = document.getElementById('authEmail').value;
-        const nick = document.getElementById('authNickname').value;
-        const password = document.getElementById('authPassword').value;
-
-        if (!email.includes('@gmail.com')) {
-            alert('Please use a Gmail address.');
-            return;
-        }
-
-        try {
-            const res = await window.supabaseClient.signUp(
-                email,
-                password,
-                { nickname: nick }
-            );
-
-            console.log(res);
-
-            alert('Registration successful! You can now login.');
-            setAuthMode('login');
-
-        } catch (err) {
-            console.error(err);
-            alert(err.message);
-        }
-    }
-
     document.getElementById('authForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('authEmail').value;
@@ -595,19 +540,26 @@
         const password = document.getElementById('authPassword').value;
         if (!email.includes('@gmail.com')) return alert('Please use a Gmail address.');
 
-        // If Supabase is available, handle auth based on selected mode.
+        // If Supabase is available, try to sign in; if user doesn't exist, sign up.
         if (window.supabaseClient && window.supabaseClient.client) {
             try {
-                if (authMode === 'register') {
-                    await registerUser();
-                    return;
-                }
-
                 await window.supabaseClient.signIn(email, password);
             } catch (err) {
-                alert('Invalid email or password.');
-                console.error(err);
-                return;
+                // try sign up flow
+                try {
+                    await window.supabaseClient.signUp(email, password, { nickname: nick });
+                    // After signUp, attempt signIn again (may require email confirmation depending on project settings)
+                    await window.supabaseClient.signIn(email, password);
+                } catch (err2) {
+                    console.warn('Supabase auth failed, falling back to local session:', err2);
+                    sessionStorage.setItem('rpm_email', email);
+                    sessionStorage.setItem('rpm_user', nick);
+                    document.getElementById('auth-overlay').classList.add('hidden');
+                    setMainHeader(nick);
+                    await loadData();
+                    updateDashboard();
+                    return;
+                }
             }
 
             // On successful auth, store email/nick locally and load data from Supabase
@@ -631,7 +583,6 @@
 
    window.onload = async () => {
     if (localStorage.getItem('rpm_theme') === 'light') toggleTheme();
-    updateAuthForm();
 
     const savedEmail = sessionStorage.getItem('rpm_email');
 
