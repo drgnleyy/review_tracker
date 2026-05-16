@@ -584,21 +584,5 @@
             updateDashboard();
         }
 
-        async function testInsert() {
-
-    const { data, error } = await window.supabaseClient.client
-        .from('drills')
-        .insert([
-            {
-                user_email: 'lia@gmail.com',
-                subject: 'Math',
-                score: 100
-            }
-        ]);
-
-    console.log('DATA:', data);
-    console.log('ERROR:', error);
-}
-
-testInsert();
+        
     };

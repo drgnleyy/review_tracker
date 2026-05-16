@@ -55,5 +55,3 @@ window.supabaseClient = {
         return await this.client.from('goals').upsert(goals, { onConflict: 'id' });
     }
 };
-
-window.supabaseClient.init();
