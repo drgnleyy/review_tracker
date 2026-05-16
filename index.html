@@ -8,11 +8,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS (UMD) - required for Supabase client initialization -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
 </head>
 <body class="dark-theme">
+
+    <!-- Supabase config -->
+    <script>
+        window.SUPABASE_URL = 'https://iyuhqurewztriixuonhw.supabase.co';
+        window.SUPABASE_ANON_KEY = 'sb_publishable_CEADoCLriCtTIpndEPPXZw_SMkLsZFN';
+    </script>
 
 <div id="auth-overlay">
     <div class="glass-card" style="width: 100%; max-width: 400px; text-align: center;">
@@ -53,7 +61,7 @@
             <div class="glass-card stat-card"><span class="stat-label">Total Drills</span><span id="stat-total-drills" class="stat-value">0</span></div>
             <div class="glass-card stat-card"><span class="stat-label">Overall Avg</span><span id="stat-avg-score" class="stat-value">0%</span></div>
             <div class="glass-card stat-card"><span class="stat-label">Goals Achieved</span><span id="stat-goals-done" class="stat-value">0</span></div>
-            <div class="glass-card stat-card"><span class="stat-label">Streak Status</span><span id="stat-streak" class="stat-value">0 🍂</span></div>
+            <div class="glass-card stat-card"><span class="stat-label">Streak Status</span><span id="stat-streak" class="stat-value">0 </span></div>
         </div>
 
         <div class="charts-row">

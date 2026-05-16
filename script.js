@@ -121,16 +121,43 @@
         return `rpm_${type}_${safe}`;
     }
 
-    function loadData() {
+    async function loadData() {
         const dKey = getStorageKey('drills');
         const gKey = getStorageKey('goals');
+        // If Supabase is initialized, fetch from DB for the signed-in user
+        try {
+            if (window.supabaseClient && window.supabaseClient.client) {
+                const email = sessionStorage.getItem('rpm_email');
+                if (email) {
+                    const dRes = await window.supabaseClient.fetchDrillsForEmail(email);
+                    drills = dRes.data || [];
+                    const gRes = await window.supabaseClient.fetchGoalsForEmail(email);
+                    goals = gRes.data || [];
+                    return;
+                }
+            }
+        } catch (err) {
+            console.warn('Supabase load failed, falling back to localStorage', err);
+        }
+
         if (dKey) drills = JSON.parse(localStorage.getItem(dKey)) || [];
         if (gKey) goals = JSON.parse(localStorage.getItem(gKey)) || [];
     }
 
-    function saveData() {
+    async function saveData() {
         const dKey = getStorageKey('drills');
         const gKey = getStorageKey('goals');
+        try {
+            if (window.supabaseClient && window.supabaseClient.client) {
+                // sync arrays to Supabase (requires tables and `id` as upsert key)
+                await window.supabaseClient.syncDrills(drills.map(d => ({ ...d, user_email: sessionStorage.getItem('rpm_email') })));
+                await window.supabaseClient.syncGoals(goals.map(g => ({ ...g, user_email: sessionStorage.getItem('rpm_email') })));
+                return;
+            }
+        } catch (err) {
+            console.warn('Supabase save failed, falling back to localStorage', err);
+        }
+
         if (dKey) localStorage.setItem(dKey, JSON.stringify(drills));
         if (gKey) localStorage.setItem(gKey, JSON.stringify(goals));
     }
@@ -495,27 +522,65 @@
         });
     }
 
-    document.getElementById('authForm').addEventListener('submit', (e) => {
+    document.getElementById('authForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('authEmail').value;
         const nick = document.getElementById('authNickname').value;
+        const password = document.getElementById('authPassword').value;
         if (!email.includes('@gmail.com')) return alert('Please use a Gmail address.');
-        
+
+        // If Supabase is available, try to sign in; if user doesn't exist, sign up.
+        if (window.supabaseClient && window.supabaseClient.client) {
+            try {
+                await window.supabaseClient.signIn(email, password);
+            } catch (err) {
+                // try sign up flow
+                try {
+                    await window.supabaseClient.signUp(email, password, { nickname: nick });
+                    // After signUp, attempt signIn again (may require email confirmation depending on project settings)
+                    await window.supabaseClient.signIn(email, password);
+                } catch (err2) {
+                    console.warn('Supabase auth failed, falling back to local session:', err2);
+                    sessionStorage.setItem('rpm_email', email);
+                    sessionStorage.setItem('rpm_user', nick);
+                    document.getElementById('auth-overlay').classList.add('hidden');
+                    setMainHeader(nick);
+                    await loadData();
+                    updateDashboard();
+                    return;
+                }
+            }
+
+            // On successful auth, store email/nick locally and load data from Supabase
+            sessionStorage.setItem('rpm_email', email);
+            sessionStorage.setItem('rpm_user', nick);
+            document.getElementById('auth-overlay').classList.add('hidden');
+            setMainHeader(nick);
+            await loadData();
+            updateDashboard();
+            return;
+        }
+
+        // Fallback: local session
         sessionStorage.setItem('rpm_email', email);
         sessionStorage.setItem('rpm_user', nick);
         document.getElementById('auth-overlay').classList.add('hidden');
         setMainHeader(nick);
-        loadData();
+        await loadData();
         updateDashboard();
     });
 
-    window.onload = () => {
+    window.onload = async () => {
         if (localStorage.getItem('rpm_theme') === 'light') toggleTheme();
+        // Initialize Supabase client if config present
+        if (window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+            window.supabaseClient.init();
+        }
         const savedEmail = sessionStorage.getItem('rpm_email');
         if (savedEmail) {
             document.getElementById('auth-overlay').classList.add('hidden');
             setMainHeader(sessionStorage.getItem('rpm_user'));
-            loadData();
+            await loadData();
             updateDashboard();
         }
     };
