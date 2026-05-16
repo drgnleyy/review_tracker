@@ -581,6 +581,18 @@
         updateDashboard();
     });
 
+    const passwordToggle = document.getElementById('togglePassword');
+    if (passwordToggle) {
+        passwordToggle.addEventListener('click', () => {
+            const passwordInput = document.getElementById('authPassword');
+            const isPasswordVisible = passwordInput.type === 'text';
+            passwordInput.type = isPasswordVisible ? 'password' : 'text';
+            passwordToggle.classList.toggle('fa-eye', isPasswordVisible);
+            passwordToggle.classList.toggle('fa-eye-slash', !isPasswordVisible);
+            passwordToggle.title = isPasswordVisible ? 'Show password' : 'Hide password';
+        });
+    }
+
    window.onload = async () => {
     if (localStorage.getItem('rpm_theme') === 'light') toggleTheme();
 

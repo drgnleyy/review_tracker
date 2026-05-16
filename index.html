@@ -29,7 +29,10 @@
         <form id="authForm">
             <div style="margin-bottom: 15px;"><input type="text" id="authNickname" placeholder="Your Nickname" required></div>
             <div style="margin-bottom: 15px;"><input type="email" id="authEmail" placeholder="Gmail Address (@gmail.com)" required></div>
-            <div style="margin-bottom: 20px;"><input type="password" id="authPassword" placeholder="Password (Secure)" required></div>
+            <div class="password-wrapper">
+                <input type="password" id="authPassword" placeholder="Password (Secure)" required>
+                <i id="togglePassword" class="fas fa-eye password-toggle" title="Show password"></i>
+            </div>
             <button type="submit" class="btn-submit">Login</button>
         </form>
     </div>
