@@ -150,8 +150,19 @@
         try {
             if (window.supabaseClient && window.supabaseClient.client) {
                 // sync arrays to Supabase (requires tables and `id` as upsert key)
-                await window.supabaseClient.syncDrills(drills.map(d => ({ ...d, user_email: sessionStorage.getItem('rpm_email') })));
-                await window.supabaseClient.syncGoals(goals.map(g => ({ ...g, user_email: sessionStorage.getItem('rpm_email') })));
+                const dRes = await window.supabaseClient.syncDrills(drills.map(d => ({
+                    ...d,
+                    user_email: sessionStorage.getItem('rpm_email')
+                })));
+
+                console.log('DRILL SYNC:', dRes);
+
+                const gRes = await window.supabaseClient.syncGoals(goals.map(g => ({
+                    ...g,
+                    user_email: sessionStorage.getItem('rpm_email')
+                })));
+
+                console.log('GOAL SYNC:', gRes);
                 return;
             }
         } catch (err) {
@@ -570,19 +581,15 @@
         updateDashboard();
     });
 
-    window.onload = async () => {
-        if (localStorage.getItem('rpm_theme') === 'light') toggleTheme();
-        // Initialize Supabase client if config present
-        if (window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
-            window.supabaseClient.init();
-        }
-        const savedEmail = sessionStorage.getItem('rpm_email');
-        if (savedEmail) {
-            document.getElementById('auth-overlay').classList.add('hidden');
-            setMainHeader(sessionStorage.getItem('rpm_user'));
-            await loadData();
-            updateDashboard();
-        }
+   window.onload = async () => {
+    if (localStorage.getItem('rpm_theme') === 'light') toggleTheme();
 
-        
-    };
+    const savedEmail = sessionStorage.getItem('rpm_email');
+
+    if (savedEmail) {
+        document.getElementById('auth-overlay').classList.add('hidden');
+        setMainHeader(sessionStorage.getItem('rpm_user'));
+        await loadData();
+        updateDashboard();
+    }
+};
