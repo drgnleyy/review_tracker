@@ -393,22 +393,29 @@
     async function downloadPDF() {
         // Reload data from Supabase to ensure we have the latest records
         await loadData();
-        
-        if (drills.length === 0) {
+
+        if (!Array.isArray(drills) || drills.length === 0) {
             alert('No drill records found. Please log your drills first before downloading.');
             return;
         }
-        
+
         const userName = sessionStorage.getItem('rpm_user') || 'User';
         const timestamp = new Date().toLocaleDateString();
         const time = new Date().toLocaleTimeString();
-        
-        // Create a container for PDF content
+
+        // Create a container for PDF content and attach it off-screen so html2canvas can render it
         const container = document.createElement('div');
         container.style.fontFamily = 'Arial, sans-serif';
         container.style.padding = '20px';
         container.style.backgroundColor = '#fff';
-        
+        container.style.position = 'absolute';
+        container.style.left = '-9999px';
+        container.style.top = '-9999px';
+        container.style.width = '1200px';
+        container.style.color = '#000';
+        container.style.boxSizing = 'border-box';
+        document.body.appendChild(container);
+
         // Add header
         const header = document.createElement('div');
         header.innerHTML = `
@@ -418,13 +425,13 @@
             <hr style="margin: 20px 0; border: none; border-top: 2px solid #ddd;">
         `;
         container.appendChild(header);
-        
+
         // Create table with drill data
         const table = document.createElement('table');
         table.style.width = '100%';
         table.style.borderCollapse = 'collapse';
         table.style.marginTop = '20px';
-        
+
         // Table header
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
@@ -442,24 +449,24 @@
         });
         thead.appendChild(headerRow);
         table.appendChild(thead);
-        
+
         // Table body with drill data
         const tbody = document.createElement('tbody');
         drills.slice().reverse().forEach((d, index) => {
             const row = document.createElement('tr');
             row.style.backgroundColor = index % 2 === 0 ? '#fff' : '#f9f9f9';
-            
+
             const cells = [
-                d.date,
-                d.subject,
-                d.total,
-                d.correct,
-                `${d.rate}%`,
-                d.result,
-                d.title,
+                d.date || '',
+                d.subject || '',
+                d.total || '',
+                d.correct || '',
+                d.rate ? `${d.rate}%` : '',
+                d.result || '',
+                d.title || '',
                 d.link ? 'Yes' : 'No'
             ];
-            
+
             cells.forEach(cell => {
                 const td = document.createElement('td');
                 td.style.border = '1px solid #ddd';
@@ -468,12 +475,12 @@
                 td.textContent = cell;
                 row.appendChild(td);
             });
-            
+
             tbody.appendChild(row);
         });
         table.appendChild(tbody);
         container.appendChild(table);
-        
+
         // Add summary at the bottom
         const summary = document.createElement('div');
         summary.style.marginTop = '30px';
@@ -486,7 +493,7 @@
             <p style="margin: 10px 0 0 0; color: #999; font-size: 11px;">Generated automatically by PsyTrack</p>
         `;
         container.appendChild(summary);
-        
+
         // PDF options
         const opt = {
             margin: 10,
@@ -495,9 +502,15 @@
             html2canvas: { scale: 2 },
             jsPDF: { orientation: 'landscape', unit: 'mm', format: 'a4' }
         };
-        
-        // Generate PDF
-        html2pdf().set(opt).from(container).save();
+
+        try {
+            await html2pdf().set(opt).from(container).save();
+        } catch (err) {
+            console.error('PDF generation failed:', err);
+            alert('Unable to create PDF. Check console for details.');
+        } finally {
+            container.remove();
+        }
     }
 
     function updateSubjects() {
