@@ -403,85 +403,88 @@
         const timestamp = new Date().toLocaleDateString();
         const time = new Date().toLocaleTimeString();
 
-        // Create a container for PDF content and attach it off-screen so html2canvas can render it
-        const container = document.createElement('div');
-        container.style.fontFamily = 'Arial, sans-serif';
-        container.style.padding = '20px';
-        container.style.backgroundColor = '#fff';
-        container.style.position = 'absolute';
-        container.style.left = '-9999px';
-        container.style.top = '-9999px';
-        container.style.width = '1200px';
-        container.style.color = '#000';
-        container.style.boxSizing = 'border-box';
-        document.body.appendChild(container);
+        // Create export wrapper to use the rendered table and styles
+        const exportWrapper = document.createElement('div');
+        exportWrapper.style.position = 'absolute';
+        exportWrapper.style.left = '-9999px';
+        exportWrapper.style.top = '0';
+        exportWrapper.style.width = '1200px';
+        exportWrapper.style.padding = '20px';
+        exportWrapper.style.backgroundColor = '#fff';
+        exportWrapper.style.color = '#000';
+        exportWrapper.style.boxSizing = 'border-box';
+        exportWrapper.style.fontFamily = 'Arial, sans-serif';
+        document.body.appendChild(exportWrapper);
 
-        // Add header
-        const header = document.createElement('div');
-        header.innerHTML = `
+        const titleNode = document.createElement('div');
+        titleNode.innerHTML = `
             <h1 style="margin: 0 0 10px 0; color: #333; font-size: 24px;">PsyTrack - Drill Records</h1>
             <p style="margin: 0 0 5px 0; color: #666; font-size: 14px;"><strong>User:</strong> ${userName}</p>
             <p style="margin: 0 0 15px 0; color: #666; font-size: 14px;"><strong>Generated:</strong> ${timestamp} at ${time}</p>
             <hr style="margin: 20px 0; border: none; border-top: 2px solid #ddd;">
         `;
-        container.appendChild(header);
+        exportWrapper.appendChild(titleNode);
 
-        // Create table with drill data
-        const table = document.createElement('table');
-        table.style.width = '100%';
-        table.style.borderCollapse = 'collapse';
-        table.style.marginTop = '20px';
+        // Clone current table container and render it for the PDF
+        const currentTableContainer = document.getElementById('tableContainer');
+        if (currentTableContainer) {
+            const clonedTable = currentTableContainer.cloneNode(true);
+            clonedTable.style.width = '100%';
+            clonedTable.style.margin = '0';
+            clonedTable.style.background = '#fff';
+            exportWrapper.appendChild(clonedTable);
+        } else {
+            // Fallback if the table container is missing
+            const fallbackTable = document.createElement('table');
+            fallbackTable.style.width = '100%';
+            fallbackTable.style.borderCollapse = 'collapse';
+            fallbackTable.style.marginTop = '20px';
 
-        // Table header
-        const thead = document.createElement('thead');
-        const headerRow = document.createElement('tr');
-        headerRow.style.backgroundColor = '#f0f0f0';
-        const headers = ['Date', 'Subject', 'Items', 'Score', 'Rate %', 'Result', 'Title', 'Link'];
-        headers.forEach(h => {
-            const th = document.createElement('th');
-            th.style.border = '1px solid #ddd';
-            th.style.padding = '10px';
-            th.style.textAlign = 'left';
-            th.style.fontWeight = 'bold';
-            th.style.fontSize = '12px';
-            th.textContent = h;
-            headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
-
-        // Table body with drill data
-        const tbody = document.createElement('tbody');
-        drills.slice().reverse().forEach((d, index) => {
-            const row = document.createElement('tr');
-            row.style.backgroundColor = index % 2 === 0 ? '#fff' : '#f9f9f9';
-
-            const cells = [
-                d.date || '',
-                d.subject || '',
-                d.total || '',
-                d.correct || '',
-                d.rate ? `${d.rate}%` : '',
-                d.result || '',
-                d.title || '',
-                d.link ? 'Yes' : 'No'
-            ];
-
-            cells.forEach(cell => {
-                const td = document.createElement('td');
-                td.style.border = '1px solid #ddd';
-                td.style.padding = '10px';
-                td.style.fontSize = '11px';
-                td.textContent = cell;
-                row.appendChild(td);
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            headerRow.style.backgroundColor = '#f0f0f0';
+            const headers = ['Date', 'Subject', 'Items', 'Score', 'Rate %', 'Result', 'Title', 'Link'];
+            headers.forEach(h => {
+                const th = document.createElement('th');
+                th.style.border = '1px solid #ddd';
+                th.style.padding = '10px';
+                th.style.textAlign = 'left';
+                th.style.fontWeight = 'bold';
+                th.style.fontSize = '12px';
+                th.textContent = h;
+                headerRow.appendChild(th);
             });
+            thead.appendChild(headerRow);
+            fallbackTable.appendChild(thead);
 
-            tbody.appendChild(row);
-        });
-        table.appendChild(tbody);
-        container.appendChild(table);
+            const tbody = document.createElement('tbody');
+            drills.slice().reverse().forEach((d, index) => {
+                const row = document.createElement('tr');
+                row.style.backgroundColor = index % 2 === 0 ? '#fff' : '#f9f9f9';
+                const cells = [
+                    d.date || '',
+                    d.subject || '',
+                    d.total || '',
+                    d.correct || '',
+                    d.rate ? `${d.rate}%` : '',
+                    d.result || '',
+                    d.title || '',
+                    d.link ? 'Yes' : 'No'
+                ];
+                cells.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.style.border = '1px solid #ddd';
+                    td.style.padding = '10px';
+                    td.style.fontSize = '11px';
+                    td.textContent = cell;
+                    row.appendChild(td);
+                });
+                tbody.appendChild(row);
+            });
+            fallbackTable.appendChild(tbody);
+            exportWrapper.appendChild(fallbackTable);
+        }
 
-        // Add summary at the bottom
         const summary = document.createElement('div');
         summary.style.marginTop = '30px';
         summary.style.paddingTop = '20px';
@@ -492,24 +495,23 @@
             <p style="margin: 5px 0; color: #666; font-size: 12px;"><strong>Fails:</strong> ${drills.filter(d => d.result === 'FAIL').length}</p>
             <p style="margin: 10px 0 0 0; color: #999; font-size: 11px;">Generated automatically by PsyTrack</p>
         `;
-        container.appendChild(summary);
+        exportWrapper.appendChild(summary);
 
-        // PDF options
         const opt = {
             margin: 10,
             filename: `PsyTrack_Records_${timestamp.replace(/\//g, '-')}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
+            html2canvas: { scale: 2, useCORS: true },
             jsPDF: { orientation: 'landscape', unit: 'mm', format: 'a4' }
         };
 
         try {
-            await html2pdf().set(opt).from(container).save();
+            await html2pdf().set(opt).from(exportWrapper).save();
         } catch (err) {
             console.error('PDF generation failed:', err);
             alert('Unable to create PDF. Check console for details.');
         } finally {
-            container.remove();
+            exportWrapper.remove();
         }
     }
 
