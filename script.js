@@ -266,9 +266,11 @@
     }
 
     function deleteDrill(id) {
-        drills = drills.filter(d => d.id !== id);
-        saveData();
-        updateDashboard();
+        if (confirm('Are you sure you want to delete this record? This action cannot be undone.')) {
+            drills = drills.filter(d => d.id !== id);
+            saveData();
+            updateDashboard();
+        }
     }
 
     function editDrill(id) {
@@ -367,7 +369,15 @@
         renderTable(filtered);
     }
 
-    function downloadPDF() {
+    async function downloadPDF() {
+        // Reload data from Supabase to ensure we have the latest records
+        await loadData();
+        
+        if (drills.length === 0) {
+            alert('No drill records found. Please log your drills first before downloading.');
+            return;
+        }
+        
         const userName = sessionStorage.getItem('rpm_user') || 'User';
         const timestamp = new Date().toLocaleDateString();
         const time = new Date().toLocaleTimeString();
