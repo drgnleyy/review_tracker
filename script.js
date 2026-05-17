@@ -207,7 +207,7 @@
         location.reload();
     }
 
-    function addNote(text = null, checked = true) {
+    function addNote(text = null, checked = false) {
         const input = document.getElementById('noteInput');
         const val = text || input.value.trim();
         if (!val) return;
@@ -231,14 +231,20 @@
         const total = parseInt(document.getElementById('totalItems').value);
         const rate = Math.round((correct / total) * 100);
         const notes = Array.from(document.querySelectorAll('.note-cb:checked')).map(c => c.value).join(', ');
+        const date = document.getElementById('drillDate').value;
+        const subject = document.getElementById('drillSubject').value;
+        const title = document.getElementById('drillTitle').value;
+        const link = document.getElementById('answerLink').value;
+
+        // Confirmation dialog
+        const confirmMsg = `Please confirm your record:\n\nDate: ${date}\nSubject: ${subject}\nTitle: ${title}\nTotal Items: ${total}\nYour Score: ${correct}\nRate: ${rate}%\n\nIs this correct?`;
+        if (!confirm(confirmMsg)) return;
 
         const entry = {
             id: editingId || Date.now().toString(),
-            date: document.getElementById('drillDate').value,
-            subject: document.getElementById('drillSubject').value,
-            title: document.getElementById('drillTitle').value,
+            date, subject, title,
             total, correct, rate, notes,
-            link: document.getElementById('answerLink').value,
+            link,
             result: rate >= 75 ? 'PASS' : 'FAIL'
         };
 
@@ -276,7 +282,7 @@
         document.getElementById('correctAnswers').value = d.correct;
         document.getElementById('answerLink').value = d.link;
         document.getElementById('notes-container').innerHTML = '';
-        if (d.notes) d.notes.split(', ').forEach(n => addNote(n, true));
+        if (d.notes) d.notes.split(', ').forEach(n => addNote(n, false));
         
         document.getElementById('submitBtn').textContent = 'Update Record';
         document.getElementById('formTitle').textContent = 'Editing Record';
@@ -320,10 +326,14 @@
         renderTable();
     }
 
+    let tableShowAll = false;
+
     function renderTable(data = null) {
         const display = data || drills;
+        const reversed = display.slice().reverse();
+        const toDisplay = tableShowAll ? reversed : reversed.slice(0, 3);
         const tbody = document.getElementById('drillsTableBody');
-        tbody.innerHTML = display.slice().reverse().map(d => `
+        tbody.innerHTML = toDisplay.map(d => `
             <tr>
                 <td>${d.date}</td><td>${d.subject}</td><td>${d.total}</td><td>${d.correct}</td><td>${d.rate}%</td>
                 <td><span class="badge ${d.result === 'PASS' ? 'badge-pass' : 'badge-fail'}">${d.result}</span></td>
@@ -334,12 +344,129 @@
                 </td>
             </tr>
         `).join('');
+        
+        // Show "See All" button if there are more than 3 records and not currently showing all
+        const seeAllBtn = document.getElementById('seeAllBtn');
+        if (reversed.length > 3) {
+            seeAllBtn.style.display = 'block';
+            seeAllBtn.textContent = tableShowAll ? 'Show Less' : 'See All Records';
+        } else {
+            seeAllBtn.style.display = 'none';
+        }
+    }
+
+    function toggleSeeAll() {
+        tableShowAll = !tableShowAll;
+        renderTable();
     }
 
     function filterRecords() {
         const query = document.getElementById('tableSearch').value.toLowerCase();
         const filtered = drills.filter(d => d.subject.toLowerCase().includes(query) || d.title.toLowerCase().includes(query));
+        tableShowAll = false;  // Reset to show only 3 when filtering
         renderTable(filtered);
+    }
+
+    function downloadPDF() {
+        const userName = sessionStorage.getItem('rpm_user') || 'User';
+        const timestamp = new Date().toLocaleDateString();
+        const time = new Date().toLocaleTimeString();
+        
+        // Create a container for PDF content
+        const container = document.createElement('div');
+        container.style.fontFamily = 'Arial, sans-serif';
+        container.style.padding = '20px';
+        container.style.backgroundColor = '#fff';
+        
+        // Add header
+        const header = document.createElement('div');
+        header.innerHTML = `
+            <h1 style="margin: 0 0 10px 0; color: #333; font-size: 24px;">PsyTrack - Drill Records</h1>
+            <p style="margin: 0 0 5px 0; color: #666; font-size: 14px;"><strong>User:</strong> ${userName}</p>
+            <p style="margin: 0 0 15px 0; color: #666; font-size: 14px;"><strong>Generated:</strong> ${timestamp} at ${time}</p>
+            <hr style="margin: 20px 0; border: none; border-top: 2px solid #ddd;">
+        `;
+        container.appendChild(header);
+        
+        // Create table with drill data
+        const table = document.createElement('table');
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+        table.style.marginTop = '20px';
+        
+        // Table header
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        headerRow.style.backgroundColor = '#f0f0f0';
+        const headers = ['Date', 'Subject', 'Items', 'Score', 'Rate %', 'Result', 'Title', 'Link'];
+        headers.forEach(h => {
+            const th = document.createElement('th');
+            th.style.border = '1px solid #ddd';
+            th.style.padding = '10px';
+            th.style.textAlign = 'left';
+            th.style.fontWeight = 'bold';
+            th.style.fontSize = '12px';
+            th.textContent = h;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+        
+        // Table body with drill data
+        const tbody = document.createElement('tbody');
+        drills.slice().reverse().forEach((d, index) => {
+            const row = document.createElement('tr');
+            row.style.backgroundColor = index % 2 === 0 ? '#fff' : '#f9f9f9';
+            
+            const cells = [
+                d.date,
+                d.subject,
+                d.total,
+                d.correct,
+                `${d.rate}%`,
+                d.result,
+                d.title,
+                d.link ? 'Yes' : 'No'
+            ];
+            
+            cells.forEach(cell => {
+                const td = document.createElement('td');
+                td.style.border = '1px solid #ddd';
+                td.style.padding = '10px';
+                td.style.fontSize = '11px';
+                td.textContent = cell;
+                row.appendChild(td);
+            });
+            
+            tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+        container.appendChild(table);
+        
+        // Add summary at the bottom
+        const summary = document.createElement('div');
+        summary.style.marginTop = '30px';
+        summary.style.paddingTop = '20px';
+        summary.style.borderTop = '2px solid #ddd';
+        summary.innerHTML = `
+            <p style="margin: 5px 0; color: #666; font-size: 12px;"><strong>Total Drills:</strong> ${drills.length}</p>
+            <p style="margin: 5px 0; color: #666; font-size: 12px;"><strong>Passes:</strong> ${drills.filter(d => d.result === 'PASS').length}</p>
+            <p style="margin: 5px 0; color: #666; font-size: 12px;"><strong>Fails:</strong> ${drills.filter(d => d.result === 'FAIL').length}</p>
+            <p style="margin: 10px 0 0 0; color: #999; font-size: 11px;">Generated automatically by PsyTrack</p>
+        `;
+        container.appendChild(summary);
+        
+        // PDF options
+        const opt = {
+            margin: 10,
+            filename: `PsyTrack_Records_${timestamp.replace(/\//g, '-')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { orientation: 'landscape', unit: 'mm', format: 'a4' }
+        };
+        
+        // Generate PDF
+        html2pdf().set(opt).from(container).save();
     }
 
     function updateSubjects() {

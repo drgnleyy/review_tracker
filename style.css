@@ -102,6 +102,14 @@
             width: 100%; background: var(--input-bg); border: 1px solid var(--glass-border); 
             padding: 12px 16px; border-radius: 12px; color: var(--text-main); outline: none; transition: 0.3s; font-size: 0.9rem;
         }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
         .password-wrapper { position: relative; margin-bottom: 20px; }
         .password-wrapper input { padding-right: 44px; }
         .password-toggle {
@@ -119,10 +127,105 @@
         }
         select option { background: var(--bg-dark); color: var(--text-main); }
         input::placeholder { color: var(--text-muted); opacity: 0.7; }
+        #totalItems::placeholder,
+        #correctAnswers::placeholder {
+            font-size: 0.9rem;
+        }
+
+        .drill-form-card {
+            width: 100%;
+            min-height: 10px;
+            max-width: 100%;
+            padding: 30px;
+        }
+        .drills-layout {
+            display: grid;
+            gap: 24px;
+            grid-template-columns: 1fr;
+        }
+        .drill-form-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+        .drill-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .drill-form-row {
+            display: grid;
+            gap: 12px;
+        }
+        .drill-form-row.columns-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .drill-form-row.columns-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .drill-form-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-muted);
+            padding: 12px 16px;
+            border-radius: 12px;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 1024px) {
+            .drill-form-card {
+                width: 100%;
+                min-height: auto;
+            }
+        }
         
         .btn-submit { 
             background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; 
             padding: 14px; border-radius: 12px; width: 100%; font-weight: 700; cursor: pointer; transition: 0.3s;
+        }
+
+        .btn-see-all {
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--primary);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+        .btn-see-all:hover {
+            background: var(--glass-bg);
+            border-color: var(--primary);
+        }
+
+        .btn-download {
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--primary);
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 1rem;
+            width: 40px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .btn-download:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
         }
 
         .table-container { overflow-x: auto; border-radius: 15px; }

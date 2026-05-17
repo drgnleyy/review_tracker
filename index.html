@@ -10,6 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Supabase JS (UMD) - required for Supabase client initialization -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+    <!-- PDF generation libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     
@@ -94,11 +96,11 @@
     </main>
 
     <section id="drills-section" class="hidden">
-        <div class="charts-row" style="grid-template-columns: 1.3fr 0.7fr;">
-            <div class="glass-card">
-                <h3 id="formTitle" style="font-size:1rem; margin-bottom:20px;">Log New Drill</h3>
-                <form id="drillForm">
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+        <div class="drills-layout">
+            <div class="glass-card drill-form-card">
+                <h3 id="formTitle">Log New Drill</h3>
+                <form id="drillForm" class="drill-form">
+                    <div class="drill-form-row columns-2">
                         <input type="text" id="drillTitle" placeholder="Drill / Exam Title (e.g. Mockboard 1)" required>
                         <select id="drillSubject" required>
                             <option value="Psych Assessment">Psych Assessment</option>
@@ -107,17 +109,21 @@
                             <option value="Industrial Psychology">Industrial Psychology</option>
                         </select>
                     </div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; margin-bottom:15px;">
+                    <div class="drill-form-row columns-3">
                         <input type="date" id="drillDate" required>
                         <input type="number" id="totalItems" placeholder="Total Items" required>
                         <input type="number" id="correctAnswers" placeholder="Your Score" required>
                     </div>
-                    <div style="margin-bottom:15px;"><input type="url" id="answerLink" placeholder="Reference Link (Drive/FB Live)"></div>
-                    <button type="submit" id="submitBtn" class="btn-submit">Save Record</button>
-                    <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden" style="background:none; border:none; color:var(--text-muted); cursor:pointer; width:100%; margin-top:15px; font-size:0.85rem;">Cancel Edit</button>
+                    <div class="drill-form-row">
+                        <input type="url" id="answerLink" placeholder="Reference Link (Drive/FB Live)">
+                    </div>
+                    <div class="drill-form-actions">
+                        <button type="submit" id="submitBtn" class="btn-submit">Save Record</button>
+                        <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden btn-cancel">Cancel Edit</button>
+                    </div>
                 </form>
             </div>
-            <div class="glass-card">
+            <div class="glass-card notes-card">
                 <h3 style="font-size:1rem;">Session Notes</h3>
                 <div style="display:flex; gap:10px; margin:20px 0;">
                     <input type="text" id="noteInput" placeholder="Add topic (e.g. Stats)">
@@ -130,12 +136,15 @@
         <div class="glass-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
                 <h3 style="font-size:1rem;">Recent Records</h3>
-                <div style="position:relative; width: 280px;">
-                    <input type="text" id="tableSearch" placeholder="Search by subject..." onkeyup="filterRecords()" style="padding-left:45px;">
-                    <i class="fas fa-search" style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.9rem;"></i>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <div style="position:relative; width: 280px;">
+                        <input type="text" id="tableSearch" placeholder="Search by subject..." onkeyup="filterRecords()" style="padding-left:45px;">
+                        <i class="fas fa-search" style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.9rem;"></i>
+                    </div>
+                    <button type="button" onclick="downloadPDF()" class="btn-download" title="Download as PDF"><i class="fas fa-download"></i></button>
                 </div>
             </div>
-            <div class="table-container">
+            <div class="table-container" id="tableContainer">
                 <table>
                     <thead>
                         <tr><th>Date</th><th>Subject</th><th>Items</th><th>Score</th><th>Rate %</th><th>Result</th><th>Type</th><th>Ref</th><th>Action</th></tr>
@@ -143,6 +152,7 @@
                     <tbody id="drillsTableBody"></tbody>
                 </table>
             </div>
+            <button id="seeAllBtn" class="btn-see-all" onclick="toggleSeeAll()" style="display:none; margin-top:20px;">See All Records</button>
         </div>
     </section>
 
