@@ -124,24 +124,45 @@
     async function loadData() {
         const dKey = getStorageKey('drills');
         const gKey = getStorageKey('goals');
+
         // If Supabase is initialized, fetch from DB for the signed-in user
-        try {
-            if (window.supabaseClient && window.supabaseClient.client) {
-                const email = sessionStorage.getItem('rpm_email');
-                if (email) {
+        if (window.supabaseClient && window.supabaseClient.client) {
+            const email = sessionStorage.getItem('rpm_email');
+            if (email) {
+                try {
                     const dRes = await window.supabaseClient.fetchDrillsForEmail(email);
-                    drills = dRes.data || [];
+                    if (!dRes.error && Array.isArray(dRes.data)) {
+                        drills = dRes.data;
+                    } else {
+                        console.warn('Failed to load drills from Supabase', dRes.error);
+                    }
+
                     const gRes = await window.supabaseClient.fetchGoalsForEmail(email);
-                    goals = gRes.data || [];
+                    if (!gRes.error && Array.isArray(gRes.data)) {
+                        goals = gRes.data;
+                    } else {
+                        console.warn('Failed to load goals from Supabase', gRes.error);
+                    }
+
+                    // If Supabase did not return any records, fall back to local storage without wiping current data.
+                    if ((!Array.isArray(drills) || drills.length === 0) && dKey) {
+                        const savedDrills = JSON.parse(localStorage.getItem(dKey));
+                        if (Array.isArray(savedDrills) && savedDrills.length > 0) drills = savedDrills;
+                    }
+                    if ((!Array.isArray(goals) || goals.length === 0) && gKey) {
+                        const savedGoals = JSON.parse(localStorage.getItem(gKey));
+                        if (Array.isArray(savedGoals) && savedGoals.length > 0) goals = savedGoals;
+                    }
+
                     return;
+                } catch (err) {
+                    console.warn('Supabase load failed, falling back to localStorage', err);
                 }
             }
-        } catch (err) {
-            console.warn('Supabase load failed, falling back to localStorage', err);
         }
 
-        if (dKey) drills = JSON.parse(localStorage.getItem(dKey)) || [];
-        if (gKey) goals = JSON.parse(localStorage.getItem(gKey)) || [];
+        if (dKey) drills = JSON.parse(localStorage.getItem(dKey)) || drills;
+        if (gKey) goals = JSON.parse(localStorage.getItem(gKey)) || goals;
     }
 
     async function saveData() {
